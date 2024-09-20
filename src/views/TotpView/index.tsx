@@ -51,10 +51,9 @@ export default function TotpView() {
     const storedSecrets = localStorage.getItem("secrets")
     let firstSecret = ""
     if (storedSecrets) {
-      firstSecret = JSON.parse(storedSecrets)[0]
+      firstSecret = JSON.parse(storedSecrets)[0] || DEFAULT_SECRET
     }
-    const secret =
-      searchParams.get("secret") || firstSecret ? firstSecret : DEFAULT_SECRET
+    const secret = searchParams.get("secret") || firstSecret
     const digitsParam = Number(searchParams.get("digits")) || DEFAULT_DIGITS
     const timePeriodParam =
       Number(searchParams.get("timePeriod")) || DEFAULT_TIME_PERIOD
