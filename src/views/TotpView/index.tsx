@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast"
 type AlgoType = "SHA-1" | "SHA-256" | "SHA-512"
 
 const DEFAULT_DIGITS = 6
-const DEFAULT_SECRET = "F3E4RG34EWREG34WF34WF34WFE"
+const DEFAULT_SECRET = "F3E4RG34EW34WFE"
 const DEFAULT_TIME_PERIOD = 30
 const DEFAULT_ALGORITHM: AlgoType = "SHA-1"
 
@@ -192,7 +192,7 @@ export default function TotpView() {
 
           {currentOtp && (
             <div className="space-y-2">
-              <div className="flex justify-between mx-10 items-center ">
+              <div className="flex justify-between mx-4 items-center ">
                 <p className="cursor-pointer">Current OTP: {currentOtp}</p>
                 <Button
                   onClick={() => {
@@ -206,7 +206,7 @@ export default function TotpView() {
                   Copy OTP
                 </Button>
               </div>
-              <div className="flex justify-between mx-10 items-center ">
+              <div className="flex justify-between mx-4 items-center ">
                 <p className="cursor-pointer">Next OTP: {nextOtp}</p>
                 <Button
                   onClick={() => {
