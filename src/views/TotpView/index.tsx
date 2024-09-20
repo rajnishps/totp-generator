@@ -13,125 +13,145 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useSearchParams } from "next/navigation"
-import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState, useCallback } from "react"
 import { TOTP } from "totp-generator"
 import { SecretManager } from "./SecretManager"
 
+type AlgoType = "SHA-1" | "SHA-256" | "SHA-512"
+
+const DEFAULT_DIGITS = 6
+const DEFAULT_TIME_PERIOD = 30
+const DEFAULT_ALGORITHM: AlgoType = "SHA-1"
+
 export default function TotpView() {
   const searchParams = useSearchParams()
+  const router = useRouter()
 
-  const rawSecretFromParams = searchParams.get("secret") || ""
-  const digitsFromParams = searchParams.get("digits")
-  const timePeriodFromParams = searchParams.get("timePeriod")
-  const [rawSecret, setRawSecret] = useState(rawSecretFromParams)
-
+  const [rawSecret, setRawSecret] = useState(searchParams.get("secret") || "")
   const [digits, setDigits] = useState(
-    digitsFromParams ? Number(digitsFromParams) : 6
+    Number(searchParams.get("digits")) || DEFAULT_DIGITS
   )
   const [timePeriod, setTimePeriod] = useState(
-    timePeriodFromParams ? Number(timePeriodFromParams) : 30
+    Number(searchParams.get("timePeriod")) || DEFAULT_TIME_PERIOD
   )
-  const [algorithm, setAlgorithm] = useState<"SHA-1" | "SHA-256" | "SHA-512">(
-    "SHA-1"
+  const [algorithm, setAlgorithm] = useState<AlgoType>(
+    (searchParams.get("algorithm") as AlgoType) || DEFAULT_ALGORITHM
   )
 
   const [currentOtp, setCurrentOtp] = useState("")
   const [nextOtp, setNextOtp] = useState("")
   const [progress, setProgress] = useState(0)
 
-  const handleGenerateOtp = () => {
-    try {
-      if (!rawSecret) {
-        alert("Secret key is required")
-        return
-      }
+  useEffect(() => {
+    const secret = searchParams.get("secret") || ""
+    const digitsParam = Number(searchParams.get("digits")) || DEFAULT_DIGITS
+    const timePeriodParam =
+      Number(searchParams.get("timePeriod")) || DEFAULT_TIME_PERIOD
+    const algorithmParam =
+      (searchParams.get("algorithm") as AlgoType) || DEFAULT_ALGORITHM
 
-      const currentTimeInMiliSeconds = Math.floor(Date.now() / 1)
-      const { otp: currentOtpValue } = TOTP.generate(rawSecret, {
-        digits: digits,
-        algorithm: algorithm as "SHA-1" | "SHA-256" | "SHA-512",
-        timestamp: currentTimeInMiliSeconds,
-        period: timePeriod,
-      })
-
-      const { otp: nextOtpValue } = TOTP.generate(rawSecret, {
-        digits: digits,
-        algorithm: algorithm as "SHA-1" | "SHA-256" | "SHA-512",
-        timestamp: currentTimeInMiliSeconds + timePeriod * 1000,
-        period: timePeriod,
-      })
-
-      setCurrentOtp(currentOtpValue)
-      setNextOtp(nextOtpValue)
-
-      // Start the progress
-      setProgress(0)
-      let interval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(interval)
-            return 100 // Ensure it doesn't exceed 100
-          }
-          return Math.min(prev + 100 / timePeriod, 100)
-        })
-      }, 1000)
-
-      // Clear the interval when done
-      return () => clearInterval(interval)
-    } catch (error) {
-      console.error("Error generating OTP:", error)
-      alert("Error generating OTP")
-    }
-  }
-
-  const handleSelectSecret = (secret: string) => {
+    // Update state if params change
     setRawSecret(secret)
-  }
+    setDigits(digitsParam)
+    setTimePeriod(timePeriodParam)
+    setAlgorithm(algorithmParam)
+  }, [searchParams])
+
+  useEffect(() => {
+    const updateParams = () => {
+      router.push(
+        `?secret=${rawSecret}&digits=${digits}&timePeriod=${timePeriod}&algorithm=${algorithm}`
+      )
+    }
+
+    updateParams()
+  }, [digits, rawSecret, timePeriod, algorithm, router])
+
+  const handleGenerateOtp = useCallback(() => {
+    if (!rawSecret) {
+      alert("Secret key is required")
+      return
+    }
+
+    const currentTimeInSeconds = Math.floor(Date.now() / 1000)
+    const generateOtp = (timestamp: number) =>
+      TOTP.generate(rawSecret, {
+        digits,
+        algorithm,
+        timestamp,
+        period: timePeriod,
+      }).otp
+
+    setCurrentOtp(generateOtp(currentTimeInSeconds))
+    setNextOtp(generateOtp(currentTimeInSeconds + timePeriod))
+
+    // Start the progress
+    setProgress(0)
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval)
+          return 100
+        }
+        return Math.min(prev + 100 / timePeriod, 100)
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [rawSecret, digits, algorithm, timePeriod])
 
   return (
     <div className="h-screen content-center grid justify-center">
-      <Card className="md:w-[420px]  ">
+      <Card className="md:w-[420px]">
         <CardHeader>
-          <CardTitle>TOTP Generator</CardTitle>
+          <CardTitle>TOTP Generator : {rawSecret}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <SecretManager />
-
-          <div>
-            <label>Secret Key (selected): {rawSecret}</label>
+        <CardContent className="space-y-2">
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <Label htmlFor="time">Number of Digits:</Label>
+            <Select
+              value={digits.toString()}
+              onValueChange={(value) => setDigits(parseInt(value))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select an number of digits" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Number of Digits</SelectLabel>
+                  <SelectItem value="6">6</SelectItem>
+                  <SelectItem value="8">8</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="numberdigit">Number of Digits:</Label>
-            <Input
-              type="text"
-              value={digits}
-              onChange={(e) => setDigits(Number(e.target.value))}
-              placeholder="6 or 8"
-              id="numberdigit"
-            />
-          </div>
-
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="period">Time Period (seconds):</Label>
-            <Input
-              type="text"
-              value={timePeriod}
-              onChange={(e) => setTimePeriod(Number(e.target.value))}
-              placeholder="Default 30 seconds"
-              id="period"
-            />
+            <Label htmlFor="time">Time Period:</Label>
+            <Select
+              value={timePeriod.toString()}
+              onValueChange={(value) => setTimePeriod(parseInt(value))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select an time period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Time Period (seconds)</SelectLabel>
+                  <SelectItem value="30">30</SelectItem>
+                  <SelectItem value="60">60</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <Label htmlFor="algo">Algorithm:</Label>
             <Select
               value={algorithm}
-              onValueChange={(value) =>
-                setAlgorithm(value as "SHA-1" | "SHA-256" | "SHA-512")
-              }
+              onValueChange={(value) => setAlgorithm(value as AlgoType)}
             >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select a fruit" />
+              <SelectTrigger>
+                <SelectValue placeholder="Select an algorithm" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
@@ -150,22 +170,19 @@ export default function TotpView() {
             <div>
               <p
                 className="cursor-pointer"
-                onClick={() => {
-                  navigator.clipboard.writeText(currentOtp)
-                }}
+                onClick={() => navigator.clipboard.writeText(currentOtp)}
               >
                 Current OTP: {currentOtp}
               </p>
               <p
                 className="cursor-pointer"
-                onClick={() => {
-                  navigator.clipboard.writeText(nextOtp)
-                }}
+                onClick={() => navigator.clipboard.writeText(nextOtp)}
               >
                 Next OTP: {nextOtp}
               </p>
             </div>
           )}
+          <SecretManager />
         </CardContent>
       </Card>
     </div>

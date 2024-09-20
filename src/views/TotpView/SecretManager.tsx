@@ -29,13 +29,19 @@ export const SecretManager = () => {
       const updatedSecrets = [...secrets, newSecret]
       setSecrets(updatedSecrets)
       localStorage.setItem("secrets", JSON.stringify(updatedSecrets))
+      router.push(
+        `?secret=${newSecret}&digits=${
+          digitsFromParams === "null" ? 6 : digitsFromParams
+        }&timePeriod=${
+          timePeriodFromParams === "null" ? 30 : timePeriodFromParams
+        }`
+      )
       setNewSecret("")
     }
   }
 
   return (
     <div>
-      <h2>Stored Secrets</h2>
       <div className="grid w-full max-w-sm items-center gap-1.5">
         <Label htmlFor="new">New Secret</Label>
         <Input
@@ -48,7 +54,8 @@ export const SecretManager = () => {
         <Button onClick={handleAddSecret}>Add Secret</Button>
       </div>
 
-      <ul>
+      <ul className="mt-2 overflow-y-scroll">
+        {/* <ul className="mt-2 max-h-20 overflow-y-scroll"> */}
         {secrets.map((secret, index) => (
           <li key={index} className="flex justify-between mt-2">
             {secret}
@@ -69,6 +76,16 @@ export const SecretManager = () => {
           </li>
         ))}
       </ul>
+      <Button
+        disabled={secrets.length === 0}
+        className="w-full mt-2"
+        onClick={() => {
+          localStorage.removeItem("secrets")
+          setSecrets([])
+        }}
+      >
+        Remove All
+      </Button>
     </div>
   )
 }
