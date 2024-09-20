@@ -59,24 +59,41 @@ export const SecretManager = () => {
         {secrets.map((secret, index) => (
           <li key={index} className="flex justify-between mt-2">
             {secret}
-            <Button
-              className="w-fit"
-              onClick={() =>
-                router.push(
-                  `?secret=${secret}&digits=${
-                    digitsFromParams === "null" ? 6 : digitsFromParams
-                  }&timePeriod=${
-                    timePeriodFromParams === "null" ? 30 : timePeriodFromParams
-                  }`
-                )
-              }
-            >
-              Use
-            </Button>
+            <div className="space-x-2">
+              <Button
+                className="w-fit"
+                onClick={() =>
+                  router.push(
+                    `?secret=${secret}&digits=${
+                      digitsFromParams === "null" ? 6 : digitsFromParams
+                    }&timePeriod=${
+                      timePeriodFromParams === "null"
+                        ? 30
+                        : timePeriodFromParams
+                    }`
+                  )
+                }
+              >
+                Use
+              </Button>
+              <Button
+                className="w-fit"
+                onClick={() => {
+                  const updatedSecrets = secrets.filter((s) => s !== secret)
+                  setSecrets(updatedSecrets)
+                  localStorage.setItem(
+                    "secrets",
+                    JSON.stringify(updatedSecrets)
+                  )
+                }}
+              >
+                Remove
+              </Button>
+            </div>
           </li>
         ))}
       </ul>
-      <Button
+      {/* <Button
         disabled={secrets.length === 0}
         className="w-full mt-2"
         onClick={() => {
@@ -85,7 +102,7 @@ export const SecretManager = () => {
         }}
       >
         Remove All
-      </Button>
+      </Button> */}
     </div>
   )
 }

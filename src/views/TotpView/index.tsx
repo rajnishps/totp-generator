@@ -74,7 +74,7 @@ export default function TotpView() {
       return
     }
 
-    const currentTimeInSeconds = Math.floor(Date.now() / 1000)
+    const currentTimeInMiliSeconds = Math.floor(Date.now() / 1)
     const generateOtp = (timestamp: number) =>
       TOTP.generate(rawSecret, {
         digits,
@@ -83,23 +83,42 @@ export default function TotpView() {
         period: timePeriod,
       }).otp
 
-    setCurrentOtp(generateOtp(currentTimeInSeconds))
-    setNextOtp(generateOtp(currentTimeInSeconds + timePeriod))
+    setCurrentOtp(generateOtp(currentTimeInMiliSeconds))
+    setNextOtp(generateOtp(currentTimeInMiliSeconds + timePeriod * 1000))
 
     // Start the progress
-    setProgress(0)
+    const now = new Date()
+    let currentSeconds = now.getSeconds()
+    let elapsedSeconds = currentSeconds % timePeriod // Calculate elapsed seconds within the current period
+    let progressValue = (elapsedSeconds / timePeriod) * 100 // Calculate initial progress
+
+    setProgress(progressValue) // Set initial progress based on current seconds
+
     const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          return 100
-        }
-        return Math.min(prev + 100 / timePeriod, 100)
-      })
+      const now = new Date()
+      currentSeconds = now.getSeconds()
+
+      if (currentSeconds % timePeriod === 0) {
+        // Reset progress every time the time period elapses
+        setProgress(0)
+      } else {
+        elapsedSeconds = currentSeconds % timePeriod // Calculate elapsed seconds
+        progressValue = (elapsedSeconds / timePeriod) * 100 // Calculate progress
+        setProgress(progressValue)
+      }
     }, 1000)
 
+    // Clear interval on cleanup
     return () => clearInterval(interval)
   }, [rawSecret, digits, algorithm, timePeriod])
+
+  useEffect(() => {
+    if (progress < 5) {
+      handleGenerateOtp()
+    } else {
+      handleGenerateOtp()
+    }
+  }, [progress, rawSecret, digits, algorithm, timePeriod])
 
   return (
     <div className="h-screen content-center grid justify-center">
@@ -164,22 +183,24 @@ export default function TotpView() {
             </Select>
           </div>
           <Progress value={100 - progress} className="w-full my-4" />
-          <Button onClick={handleGenerateOtp}>Generate OTP</Button>
+          {/* <Button onClick={handleGenerateOtp}>Generate OTP</Button> */}
 
           {currentOtp && (
-            <div>
-              <p
-                className="cursor-pointer"
-                onClick={() => navigator.clipboard.writeText(currentOtp)}
-              >
-                Current OTP: {currentOtp}
-              </p>
-              <p
-                className="cursor-pointer"
-                onClick={() => navigator.clipboard.writeText(nextOtp)}
-              >
-                Next OTP: {nextOtp}
-              </p>
+            <div className="space-y-2">
+              <div className="flex justify-around items-center ">
+                <p className="cursor-pointer">Current OTP: {currentOtp}</p>
+                <Button
+                  onClick={() => navigator.clipboard.writeText(currentOtp)}
+                >
+                  Copy OTP
+                </Button>
+              </div>
+              <div className="flex justify-around items-center ">
+                <p className="cursor-pointer">Next OTP: {nextOtp}</p>
+                <Button onClick={() => navigator.clipboard.writeText(nextOtp)}>
+                  Copy OTP
+                </Button>
+              </div>
             </div>
           )}
           <SecretManager />
