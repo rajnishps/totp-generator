@@ -14,77 +14,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { TOTP } from "totp-generator"
-
-const SecretManager = ({
-  onSelectSecret,
-}: {
-  onSelectSecret: (secret: string) => void
-}) => {
-  const [secrets, setSecrets] = useState<string[]>([])
-  const [newSecret, setNewSecret] = useState("")
-
-  // Load secrets from local storage on component mount
-  useEffect(() => {
-    const storedSecrets = localStorage.getItem("secrets")
-    if (storedSecrets) {
-      setSecrets(JSON.parse(storedSecrets))
-    }
-  }, [])
-
-  const handleAddSecret = () => {
-    if (newSecret && !secrets.includes(newSecret)) {
-      const updatedSecrets = [...secrets, newSecret]
-      setSecrets(updatedSecrets)
-      localStorage.setItem("secrets", JSON.stringify(updatedSecrets))
-      setNewSecret("")
-    }
-  }
-
-  const handleSelectSecret = (secret: string) => {
-    onSelectSecret(secret)
-  }
-
-  return (
-    <div>
-      <h2>Stored Secrets</h2>
-      <div className="grid w-full max-w-sm items-center gap-1.5">
-        <Label htmlFor="new">New Secret</Label>
-        <Input
-          type="text"
-          value={newSecret}
-          onChange={(e) => setNewSecret(e.target.value)}
-          placeholder="Add new secret"
-          id="new"
-        />
-        <Button onClick={handleAddSecret}>Add Secret</Button>
-      </div>
-
-      <ul>
-        {secrets.map((secret, index) => (
-          <li key={index} className="flex justify-between mt-2">
-            {secret}
-            <Button
-              className="w-fit"
-              onClick={() => handleSelectSecret(secret)}
-            >
-              Use
-            </Button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
+import { SecretManager } from "./SecretManager"
 
 export default function TotpView() {
   const searchParams = useSearchParams()
 
   const rawSecretFromParams = searchParams.get("secret") || ""
-  const [rawSecret, setRawSecret] = useState(rawSecretFromParams)
   const digitsFromParams = searchParams.get("digits")
   const timePeriodFromParams = searchParams.get("timePeriod")
+  const [rawSecret, setRawSecret] = useState(rawSecretFromParams)
 
   const [digits, setDigits] = useState(
     digitsFromParams ? Number(digitsFromParams) : 6
@@ -156,7 +96,7 @@ export default function TotpView() {
           <CardTitle>TOTP Generator</CardTitle>
         </CardHeader>
         <CardContent>
-          <SecretManager onSelectSecret={handleSelectSecret} />
+          <SecretManager />
 
           <div>
             <label>Secret Key (selected): {rawSecret}</label>

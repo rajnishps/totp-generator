@@ -1,5 +1,10 @@
-import Link from "next/link"
+import TotpView from "@/views/TotpView"
+import { Suspense } from "react"
 
 export default function Home() {
-  return <Link href="/totp">Totp</Link>
+  return (
+    <Suspense fallback={<></>}>
+      <TotpView />
+    </Suspense>
+  )
 }
