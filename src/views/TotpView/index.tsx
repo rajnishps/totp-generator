@@ -17,6 +17,8 @@ import { useCallback, useEffect, useState } from "react"
 import { TOTP } from "totp-generator"
 import { SecretManager } from "./SecretManager"
 import { useToast } from "@/hooks/use-toast"
+import QRcodeView from "./QRcodeView"
+import { Separator } from "@/components/ui/separator"
 
 type AlgoType = "SHA-1" | "SHA-256" | "SHA-512"
 
@@ -128,65 +130,72 @@ export default function TotpView() {
     <div className="h-screen content-center grid justify-center">
       <Card className="md:w-[420px]">
         <CardHeader>
-          <CardTitle>TOTP Generator : {rawSecret}</CardTitle>
+          <CardTitle className="text-center">
+            TOTP Generator : {rawSecret}
+          </CardTitle>
+          <QRcodeView secret={rawSecret} />
+          <Separator className="my-4" />
         </CardHeader>
         <CardContent className="space-y-2">
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="time">Number of Digits:</Label>
-            <Select
-              value={digits.toString()}
-              onValueChange={(value) => setDigits(parseInt(value))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select an number of digits" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Number of Digits</SelectLabel>
-                  <SelectItem value="6">6</SelectItem>
-                  <SelectItem value="8">8</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+          <div className="flex flex-row gap-2">
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+              <Label htmlFor="time">Number of Digits:</Label>
+              <Select
+                value={digits.toString()}
+                onValueChange={(value) => setDigits(parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an number of digits" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Number of Digits</SelectLabel>
+                    <SelectItem value="6">6</SelectItem>
+                    <SelectItem value="8">8</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+              <Label htmlFor="time">Time Period:</Label>
+              <Select
+                value={timePeriod.toString()}
+                onValueChange={(value) => setTimePeriod(parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an time period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Time Period (seconds)</SelectLabel>
+                    <SelectItem value="30">30</SelectItem>
+                    <SelectItem value="60">60</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+              <Label htmlFor="algo">Algorithm:</Label>
+              <Select
+                value={algorithm}
+                onValueChange={(value) => setAlgorithm(value as AlgoType)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an algorithm" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Algorithm</SelectLabel>
+                    <SelectItem value="SHA-1">SHA-1</SelectItem>
+                    <SelectItem value="SHA-256">SHA-256</SelectItem>
+                    <SelectItem value="SHA-512">SHA-512</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="time">Time Period:</Label>
-            <Select
-              value={timePeriod.toString()}
-              onValueChange={(value) => setTimePeriod(parseInt(value))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select an time period" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Time Period (seconds)</SelectLabel>
-                  <SelectItem value="30">30</SelectItem>
-                  <SelectItem value="60">60</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="algo">Algorithm:</Label>
-            <Select
-              value={algorithm}
-              onValueChange={(value) => setAlgorithm(value as AlgoType)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select an algorithm" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Algorithm</SelectLabel>
-                  <SelectItem value="SHA-1">SHA-1</SelectItem>
-                  <SelectItem value="SHA-256">SHA-256</SelectItem>
-                  <SelectItem value="SHA-512">SHA-512</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-          <Progress value={100 - progress} className="w-full my-4" />
+          <Separator className="my-4" />
+          <Progress value={100 - progress} className="w-full my-4 " />
           {/* <Button onClick={handleGenerateOtp}>Generate OTP</Button> */}
 
           {currentOtp && (
@@ -221,6 +230,7 @@ export default function TotpView() {
               </div>
             </div>
           )}
+          <Separator className="my-4" />
           <SecretManager />
         </CardContent>
       </Card>

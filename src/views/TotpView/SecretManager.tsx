@@ -41,17 +41,21 @@ export const SecretManager = () => {
   }
 
   return (
-    <div>
-      <div className="grid w-full max-w-sm items-center gap-1.5">
-        <Label htmlFor="new">New Secret</Label>
-        <Input
-          type="text"
-          value={newSecret}
-          onChange={(e) => setNewSecret(e.target.value)}
-          placeholder="Add new secret"
-          id="new"
-        />
-        <Button onClick={handleAddSecret}>Add Secret</Button>
+    <div className="pt-2">
+      <div className="flex flex-row gap-2 items-end">
+        <div className="grid w-full max-w-sm items-center  gap-1.5">
+          {/* <Label htmlFor="new">New Secret</Label> */}
+          <Input
+            type="text"
+            value={newSecret}
+            onChange={(e) => setNewSecret(e.target.value)}
+            placeholder="Add new secret"
+            id="new"
+          />
+        </div>
+        <Button className="w-fit" onClick={handleAddSecret}>
+          Add Secret
+        </Button>
       </div>
 
       <ul className="mt-2 overflow-y-scroll">
