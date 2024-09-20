@@ -191,7 +191,7 @@ export default function TotpView() {
 
           {currentOtp && (
             <div className="space-y-2">
-              <div className="flex justify-between mx-4 items-center ">
+              <div className="flex justify-between mx-4 gap-4 items-center ">
                 <p className="cursor-pointer">Current OTP: {currentOtp}</p>
                 <Button
                   onClick={() => {
@@ -205,7 +205,7 @@ export default function TotpView() {
                   Copy OTP
                 </Button>
               </div>
-              <div className="flex justify-between mx-4 items-center ">
+              <div className="flex justify-between mx-4 gap-4 items-center ">
                 <p className="cursor-pointer">Next OTP: {nextOtp}</p>
                 <Button
                   onClick={() => {
