@@ -78,6 +78,7 @@ export const SecretManager = () => {
               </Button>
               <Button
                 className="w-fit"
+                variant="destructive"
                 onClick={() => {
                   const updatedSecrets = secrets.filter((s) => s !== secret)
                   setSecrets(updatedSecrets)

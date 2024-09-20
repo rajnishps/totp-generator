@@ -1,7 +1,6 @@
 "use client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import {
@@ -14,21 +13,26 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState, useCallback } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { TOTP } from "totp-generator"
 import { SecretManager } from "./SecretManager"
+import { useToast } from "@/hooks/use-toast"
 
 type AlgoType = "SHA-1" | "SHA-256" | "SHA-512"
 
 const DEFAULT_DIGITS = 6
+const DEFAULT_SECRET = "F3E4RG34EWREG34WF34WF34WFE"
 const DEFAULT_TIME_PERIOD = 30
 const DEFAULT_ALGORITHM: AlgoType = "SHA-1"
 
 export default function TotpView() {
+  const { toast } = useToast()
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const [rawSecret, setRawSecret] = useState(searchParams.get("secret") || "")
+  const [rawSecret, setRawSecret] = useState(
+    searchParams.get("secret") || DEFAULT_SECRET
+  )
   const [digits, setDigits] = useState(
     Number(searchParams.get("digits")) || DEFAULT_DIGITS
   )
@@ -44,7 +48,7 @@ export default function TotpView() {
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
-    const secret = searchParams.get("secret") || ""
+    const secret = searchParams.get("secret") || DEFAULT_SECRET
     const digitsParam = Number(searchParams.get("digits")) || DEFAULT_DIGITS
     const timePeriodParam =
       Number(searchParams.get("timePeriod")) || DEFAULT_TIME_PERIOD
@@ -69,11 +73,6 @@ export default function TotpView() {
   }, [digits, rawSecret, timePeriod, algorithm, router])
 
   const handleGenerateOtp = useCallback(() => {
-    if (!rawSecret) {
-      alert("Secret key is required")
-      return
-    }
-
     const currentTimeInMiliSeconds = Math.floor(Date.now() / 1)
     const generateOtp = (timestamp: number) =>
       TOTP.generate(rawSecret, {
@@ -187,17 +186,31 @@ export default function TotpView() {
 
           {currentOtp && (
             <div className="space-y-2">
-              <div className="flex justify-around items-center ">
+              <div className="flex justify-between mx-10 items-center ">
                 <p className="cursor-pointer">Current OTP: {currentOtp}</p>
                 <Button
-                  onClick={() => navigator.clipboard.writeText(currentOtp)}
+                  onClick={() => {
+                    navigator.clipboard.writeText(currentOtp)
+                    toast({
+                      title: "OTP Copied",
+                      description: "Current OTP has been copied to clipboard",
+                    })
+                  }}
                 >
                   Copy OTP
                 </Button>
               </div>
-              <div className="flex justify-around items-center ">
+              <div className="flex justify-between mx-10 items-center ">
                 <p className="cursor-pointer">Next OTP: {nextOtp}</p>
-                <Button onClick={() => navigator.clipboard.writeText(nextOtp)}>
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(nextOtp)
+                    toast({
+                      title: "Next OTP Copied",
+                      description: "Next OTP has been copied to clipboard",
+                    })
+                  }}
+                >
                   Copy OTP
                 </Button>
               </div>
