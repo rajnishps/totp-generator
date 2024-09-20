@@ -48,7 +48,13 @@ export default function TotpView() {
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
-    const secret = searchParams.get("secret") || DEFAULT_SECRET
+    const storedSecrets = localStorage.getItem("secrets")
+    let firstSecret = ""
+    if (storedSecrets) {
+      firstSecret = JSON.parse(storedSecrets)[0]
+    }
+    const secret =
+      searchParams.get("secret") || firstSecret ? firstSecret : DEFAULT_SECRET
     const digitsParam = Number(searchParams.get("digits")) || DEFAULT_DIGITS
     const timePeriodParam =
       Number(searchParams.get("timePeriod")) || DEFAULT_TIME_PERIOD
