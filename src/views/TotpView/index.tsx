@@ -126,20 +126,28 @@ export default function TotpView() {
     }
   }, [progress, rawSecret, digits, algorithm, timePeriod])
 
+  useEffect(() => {
+    if (navigator) {
+      navigator.clipboard.writeText(currentOtp)
+      toast({
+        title: `OTP Copied ${currentOtp}`,
+        description: "Current OTP has been copied to clipboard",
+      })
+    }
+  }, [currentOtp])
+
   return (
     <div className="h-screen content-center grid justify-center">
-      <Card className="md:w-[420px]">
+      <Card className="md:w-[420px] border-slate-600/30 shadow-lg bg-black/80 text-white">
         <CardHeader>
-          <CardTitle className="text-center">
-            TOTP Generator : {rawSecret}
-          </CardTitle>
+          <CardTitle className="text-center">{rawSecret}</CardTitle>
           <QRcodeView secret={rawSecret} />
           <Separator className="my-4" />
         </CardHeader>
         <CardContent className="space-y-2">
-          <div className="flex flex-row gap-2">
+          <div className="flex flex-row gap-2 ">
             <div className="grid w-full max-w-sm items-center gap-1.5">
-              <Label htmlFor="time">Number of Digits:</Label>
+              <Label htmlFor="time">Digits:</Label>
               <Select
                 value={digits.toString()}
                 onValueChange={(value) => setDigits(parseInt(value))}
@@ -149,7 +157,7 @@ export default function TotpView() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectLabel>Number of Digits</SelectLabel>
+                    <SelectLabel>Digits</SelectLabel>
                     <SelectItem value="6">6</SelectItem>
                     <SelectItem value="8">8</SelectItem>
                   </SelectGroup>
@@ -157,7 +165,7 @@ export default function TotpView() {
               </Select>
             </div>
             <div className="grid w-full max-w-sm items-center gap-1.5">
-              <Label htmlFor="time">Time Period:</Label>
+              <Label htmlFor="time">Time:</Label>
               <Select
                 value={timePeriod.toString()}
                 onValueChange={(value) => setTimePeriod(parseInt(value))}
@@ -167,7 +175,7 @@ export default function TotpView() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectLabel>Time Period (seconds)</SelectLabel>
+                    <SelectLabel>Time (seconds)</SelectLabel>
                     <SelectItem value="30">30</SelectItem>
                     <SelectItem value="60">60</SelectItem>
                   </SelectGroup>
@@ -194,8 +202,8 @@ export default function TotpView() {
               </Select>
             </div>
           </div>
-          <Separator className="my-4" />
-          <Progress value={100 - progress} className="w-full my-4 " />
+          <Separator className="my-4 " />
+          <Progress value={100 - progress} className="w-full my-4" />
           {/* <Button onClick={handleGenerateOtp}>Generate OTP</Button> */}
 
           {currentOtp && (
