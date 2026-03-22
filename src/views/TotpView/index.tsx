@@ -19,6 +19,7 @@ import { SecretManager } from "./SecretManager"
 import { useToast } from "@/hooks/use-toast"
 import QRcodeView from "./QRcodeView"
 import { Separator } from "@/components/ui/separator"
+import { ClipboardCopy, Pause, Play } from "lucide-react"
 
 type AlgoType = "SHA-1" | "SHA-256" | "SHA-512"
 
@@ -44,18 +45,33 @@ export default function TotpView() {
   const [algorithm, setAlgorithm] = useState<AlgoType>(
     (searchParams.get("algorithm") as AlgoType) || DEFAULT_ALGORITHM
   )
+  const [name, setName] = useState(searchParams.get("name") || "")
 
   const [currentOtp, setCurrentOtp] = useState("")
   const [nextOtp, setNextOtp] = useState("")
   const [progress, setProgress] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
 
   useEffect(() => {
     const storedSecrets = localStorage.getItem("secrets")
     let firstSecret = ""
+    let firstName = ""
     if (storedSecrets) {
-      firstSecret = JSON.parse(storedSecrets)[0] || DEFAULT_SECRET
+      const parsed = JSON.parse(storedSecrets)
+      const firstEntry = parsed[0]
+      if (firstEntry) {
+        if (typeof firstEntry === "string") {
+          firstSecret = firstEntry
+        } else {
+          firstSecret = firstEntry.secret
+          firstName = firstEntry.name
+        }
+      } else {
+        firstSecret = DEFAULT_SECRET
+      }
     }
     const secret = searchParams.get("secret") || firstSecret
+    const nameParam = searchParams.get("name") || firstName
     const digitsParam = Number(searchParams.get("digits")) || DEFAULT_DIGITS
     const timePeriodParam =
       Number(searchParams.get("timePeriod")) || DEFAULT_TIME_PERIOD
@@ -64,6 +80,7 @@ export default function TotpView() {
 
     // Update state if params change
     setRawSecret(secret)
+    setName(nameParam)
     setDigits(digitsParam)
     setTimePeriod(timePeriodParam)
     setAlgorithm(algorithmParam)
@@ -72,25 +89,32 @@ export default function TotpView() {
   useEffect(() => {
     const updateParams = () => {
       router.push(
-        `?secret=${rawSecret}&digits=${digits}&timePeriod=${timePeriod}&algorithm=${algorithm}`
+        `?secret=${rawSecret}&name=${name}&digits=${digits}&timePeriod=${timePeriod}&algorithm=${algorithm}`
       )
     }
 
     updateParams()
   }, [digits, rawSecret, timePeriod, algorithm, router])
 
-  const handleGenerateOtp = useCallback(() => {
+  const handleGenerateOtp = useCallback(async () => {
     const currentTimeInMiliSeconds = Math.floor(Date.now() / 1)
-    const generateOtp = (timestamp: number) =>
-      TOTP.generate(rawSecret, {
-        digits,
-        algorithm,
-        timestamp,
-        period: timePeriod,
-      }).otp
 
-    setCurrentOtp(generateOtp(currentTimeInMiliSeconds))
-    setNextOtp(generateOtp(currentTimeInMiliSeconds + timePeriod * 1000))
+    const currentRes = await TOTP.generate(rawSecret, {
+      digits,
+      algorithm,
+      timestamp: currentTimeInMiliSeconds,
+      period: timePeriod,
+    })
+
+    const nextRes = await TOTP.generate(rawSecret, {
+      digits,
+      algorithm,
+      timestamp: currentTimeInMiliSeconds + timePeriod * 1000,
+      period: timePeriod,
+    })
+
+    setCurrentOtp(currentRes.otp)
+    setNextOtp(nextRes.otp)
 
     // Start the progress
     const now = new Date()
@@ -127,20 +151,32 @@ export default function TotpView() {
   }, [progress, rawSecret, digits, algorithm, timePeriod])
 
   useEffect(() => {
-    if (navigator) {
+    if (navigator && currentOtp && !isPaused) {
       navigator.clipboard.writeText(currentOtp)
       toast({
         title: `OTP Copied ${currentOtp}`,
         description: "Current OTP has been copied to clipboard",
       })
     }
-  }, [currentOtp])
+  }, [currentOtp, isPaused])
 
   return (
     <div className="h-screen content-center grid justify-center">
-      <Card className="md:w-[420px] border-slate-600/30 shadow-lg bg-black/80 text-white">
-        <CardHeader>
-          <CardTitle className="text-center">{rawSecret}</CardTitle>
+      <Card className="md:w-[600px] border-slate-600/30 shadow-lg bg-black/80 text-white">
+        <CardHeader className="relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 h-8 w-8 rounded-full bg-slate-800 border-slate-700 hover:bg-slate-700 text-white"
+            onClick={() => setIsPaused(!isPaused)}
+            title={isPaused ? "Resume Auto-copy" : "Pause Auto-copy"}
+          >
+            {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+          </Button>
+          <CardTitle className="text-center flex flex-col gap-1">
+            {name && <span className="text-sm text-slate-400 font-normal">{name}</span>}
+            <span className="text-lg">{rawSecret}</span>
+          </CardTitle>
           <QRcodeView secret={rawSecret} />
           <Separator className="my-4" />
         </CardHeader>
