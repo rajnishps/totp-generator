@@ -68,129 +68,153 @@ export const SecretManager = () => {
   }
 
   return (
-    <div className="pt-2">
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-row gap-2 items-end">
-          <div className="grid w-full items-center gap-1.5">
-            <Input
-              type="text"
-              value={newSecret}
-              onChange={(e) => setNewSecret(e.target.value)}
-              placeholder="Add new secret"
-              id="new"
-            />
-          </div>
-
-          <Button className="w-fit" onClick={handleAddSecret}>
-            Add Secret
-          </Button>
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 p-3 rounded-lg bg-slate-950/40 border border-slate-800/50">
+        <div className="space-y-2">
+          <Label htmlFor="name" className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Label</Label>
+          <Input
+            id="name"
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="e.g. GitHub"
+            className="h-9 bg-slate-900 border-slate-800 text-xs text-slate-300 placeholder:text-slate-600 focus:ring-blue-500/20"
+          />
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="secret" className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Secret Key</Label>
+          <Input
+            id="secret"
+            type="text"
+            value={newSecret}
+            onChange={(e) => setNewSecret(e.target.value)}
+            placeholder="Enter base32 secret"
+            className="h-9 bg-slate-900 border-slate-800 text-xs text-slate-300 placeholder:text-slate-600 focus:ring-blue-500/20"
+          />
+        </div>
+        <Button 
+          className="w-full h-9 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-md transition-colors"
+          onClick={handleAddSecret}
+          disabled={!newSecret}
+        >
+          Add to Vault
+        </Button>
       </div>
 
-      <ul className="mt-2 overflow-y-scroll max-h-[300px]">
+      <div className="space-y-2 max-h-[400px] pr-1 overflow-y-auto custom-scrollbar">
+        {secrets.length === 0 && (
+          <div className="text-center py-8 px-4 rounded-lg border border-dashed border-slate-800">
+            <p className="text-xs text-slate-500">No secrets found in vault</p>
+          </div>
+        )}
         {secrets.map((entry, index) => (
-          <li
+          <div
             key={index}
-            className="flex justify-between mt-2 items-center gap-2"
+            className={cn(
+              "group p-3 rounded-xl border transition-all duration-200",
+              searchParams.get("secret") === entry.secret 
+                ? "bg-blue-500/10 border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.1)]" 
+                : "bg-slate-900/30 border-slate-800/50 hover:bg-slate-900/60 hover:border-slate-700"
+            )}
           >
-            <div className="flex flex-col flex-1">
-              {editingIndex === index ? (
-                <div className="flex flex-row gap-1 items-center">
-                  <Input
-                    className="h-7 text-xs py-1"
-                    value={editingName}
-                    onChange={(e) => setEditingName(e.target.value)}
-                    placeholder="Enter name..."
-                    autoFocus
-                  />
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 text-green-500"
-                    onClick={() => handleSaveEdit(index)}
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 text-red-500"
-                    onClick={() => setEditingIndex(null)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center gap-2 group">
-                    <span
-                      className={cn(
-                        "text-sm font-semibold text-slate-300",
-                        !entry.name && "uppercase text-md",
-                      )}
-                    >
-                      {entry.name || entry.secret}
-                    </span>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => {
-                        setEditingIndex(index)
-                        setEditingName(entry.name)
-                      }}
-                    >
-                      <Edit2 className="h-3 w-3" />
-                    </Button>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                {editingIndex === index ? (
+                  <div className="flex flex-row gap-2 items-center">
+                    <Input
+                      className="h-8 text-xs bg-slate-950"
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      autoFocus
+                    />
+                    <div className="flex gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-green-500 hover:bg-green-500/10"
+                        onClick={() => handleSaveEdit(index)}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-slate-400 hover:bg-slate-800"
+                        onClick={() => setEditingIndex(null)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <span
-                    className={cn(
-                      "text-md text-slate-400 uppercase",
-                      !entry.name && "hidden ",
-                    )}
-                  >
-                    {entry.secret}
-                  </span>
-                </>
-              )}
+                ) : (
+                  <div className="group/name relative">
+                    <div className="flex items-center gap-2">
+                       <span className="text-sm font-semibold text-slate-200 truncate block">
+                        {entry.name || "Untitled"}
+                      </span>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 opacity-0 group-hover/name:opacity-100 transition-opacity"
+                        onClick={() => {
+                          setEditingIndex(index)
+                          setEditingName(entry.name)
+                        }}
+                      >
+                        <Edit2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-500 truncate block mt-1">
+                      {entry.secret}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Button
+                  size="sm"
+                  className={cn(
+                    "h-7 px-3 text-[10px] font-bold uppercase tracking-wider transition-all",
+                    searchParams.get("secret") === entry.secret
+                      ? "bg-blue-600 hover:bg-blue-500 text-white"
+                      : "bg-slate-800 hover:bg-slate-700 text-slate-300"
+                  )}
+                  onClick={() =>
+                    router.push(
+                      `?secret=${entry.secret}&name=${entry.name}&digits=${
+                        digitsFromParams === "null" ? 6 : digitsFromParams
+                      }&timePeriod=${
+                        timePeriodFromParams === "null"
+                          ? 30
+                          : timePeriodFromParams
+                      }`,
+                    )
+                  }
+                >
+                  {searchParams.get("secret") === entry.secret ? "Active" : "Use"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-3 text-[10px] font-semibold text-slate-600 hover:text-rose-400 hover:bg-rose-400/5 transition-colors"
+                  onClick={() => {
+                    const updatedSecrets = secrets.filter(
+                      (s, i) => i !== index,
+                    )
+                    setSecrets(updatedSecrets)
+                    localStorage.setItem(
+                      "secrets",
+                      JSON.stringify(updatedSecrets),
+                    )
+                  }}
+                >
+                  Delete
+                </Button>
+              </div>
             </div>
-            <div className="space-x-2 flex items-center">
-              <Button
-                className="w-fit"
-                onClick={() =>
-                  router.push(
-                    `?secret=${entry.secret}&name=${entry.name}&digits=${
-                      digitsFromParams === "null" ? 6 : digitsFromParams
-                    }&timePeriod=${
-                      timePeriodFromParams === "null"
-                        ? 30
-                        : timePeriodFromParams
-                    }`,
-                  )
-                }
-              >
-                Use
-              </Button>
-              <Button
-                className="w-fit"
-                variant="destructive"
-                onClick={() => {
-                  const updatedSecrets = secrets.filter(
-                    (s) => s.secret !== entry.secret,
-                  )
-                  setSecrets(updatedSecrets)
-                  localStorage.setItem(
-                    "secrets",
-                    JSON.stringify(updatedSecrets),
-                  )
-                }}
-              >
-                Remove
-              </Button>
-            </div>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   )
 }
