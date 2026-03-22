@@ -83,27 +83,27 @@ export const SecretManager = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 p-3 rounded-lg bg-slate-950/40 border border-slate-800/50">
+      <div className="flex flex-col gap-3 p-3 rounded-lg bg-zinc-950/40 border border-zinc-800/50">
         <div className="space-y-2">
-          <Label htmlFor="name" className="text-[10px] uppercase tracking-wider text-slate-500 font-bold text-left block">Label</Label>
+          <Label htmlFor="name" className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold text-left block">Label</Label>
           <Input
             id="name"
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="e.g. GitHub"
-            className="h-9 bg-slate-900 border-slate-800 text-xs text-slate-300 placeholder:text-slate-600 focus:ring-blue-500/20"
+            className="h-9 bg-zinc-900 border-zinc-800 text-xs text-zinc-300 placeholder:text-zinc-600 focus:ring-blue-500/20"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="secret" className="text-[10px] uppercase tracking-wider text-slate-500 font-bold text-left block">Secret Key</Label>
+          <Label htmlFor="secret" className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold text-left block">Secret Key</Label>
           <Input
             id="secret"
             type="text"
             value={newSecret}
             onChange={(e) => setNewSecret(e.target.value)}
             placeholder="Enter base32 secret"
-            className="h-9 bg-slate-900 border-slate-800 text-xs text-slate-300 placeholder:text-slate-600 focus:ring-blue-500/20"
+            className="h-9 bg-zinc-900 border-zinc-800 text-xs text-zinc-300 placeholder:text-zinc-600 focus:ring-blue-500/20"
           />
         </div>
         <Button 
@@ -117,8 +117,8 @@ export const SecretManager = () => {
 
       <div className="space-y-2 max-h-[400px] pr-1 overflow-y-auto custom-scrollbar">
         {secrets.length === 0 && (
-          <div className="text-center py-8 px-4 rounded-lg border border-dashed border-slate-800">
-            <p className="text-xs text-slate-500">No secrets found in vault</p>
+          <div className="text-center py-8 px-4 rounded-lg border border-dashed border-zinc-800">
+            <p className="text-xs text-zinc-500">No secrets found in vault</p>
           </div>
         )}
         {secrets.map((entry, index) => (
@@ -128,7 +128,7 @@ export const SecretManager = () => {
               "group p-3 rounded-xl border transition-all duration-200",
               searchParams.get("secret") === entry.secret 
                 ? "bg-blue-500/10 border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.1)]" 
-                : "bg-slate-900/30 border-slate-800/50 hover:bg-slate-900/60 hover:border-slate-700"
+                : "bg-zinc-900/30 border-zinc-800/50 hover:bg-zinc-900/60 hover:border-zinc-700"
             )}
           >
             <div className="flex items-start justify-between gap-3">
@@ -136,7 +136,7 @@ export const SecretManager = () => {
                 {editingIndex === index ? (
                   <div className="flex flex-row gap-2 items-center">
                     <Input
-                      className="h-8 text-xs bg-slate-950"
+                      className="h-8 text-xs bg-zinc-950"
                       value={editingName}
                       onChange={(e) => setEditingName(e.target.value)}
                       autoFocus
@@ -153,7 +153,7 @@ export const SecretManager = () => {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-slate-400 hover:bg-slate-800"
+                        className="h-8 w-8 text-zinc-400 hover:bg-zinc-800"
                         onClick={() => setEditingIndex(null)}
                       >
                         <X className="h-4 w-4" />
@@ -163,7 +163,7 @@ export const SecretManager = () => {
                 ) : (
                   <div className="group/name relative">
                     <div className="flex items-center gap-2">
-                       <span className="text-sm font-semibold text-slate-200 truncate block text-left">
+                       <span className="text-sm font-semibold text-zinc-200 truncate block text-left">
                         {entry.name || "Untitled"}
                       </span>
                       <Button
@@ -178,7 +178,7 @@ export const SecretManager = () => {
                         <Edit2 className="h-3 w-3" />
                       </Button>
                     </div>
-                    <span className="text-[10px] font-mono text-slate-500 truncate block mt-1 text-left">
+                    <span className="text-[10px] font-mono text-zinc-500 truncate block mt-1 text-left">
                       {entry.secret}
                     </span>
                   </div>
@@ -191,7 +191,7 @@ export const SecretManager = () => {
                     "h-7 px-3 text-[10px] font-bold uppercase tracking-wider transition-all",
                     searchParams.get("secret") === entry.secret
                       ? "bg-blue-600 hover:bg-blue-500 text-white"
-                      : "bg-slate-800 hover:bg-slate-700 text-slate-300"
+                      : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
                   )}
                   onClick={() =>
                     router.push(
@@ -214,7 +214,7 @@ export const SecretManager = () => {
                     "h-7 px-3 text-[10px] font-semibold transition-all",
                     deleteConfirmIndex === index 
                       ? "text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 shadow-[0_0_10px_rgba(244,63,94,0.1)]" 
-                      : "text-slate-600 hover:text-rose-400 hover:bg-rose-400/5"
+                      : "text-zinc-600 hover:text-rose-400 hover:bg-rose-400/5"
                   )}
                   onClick={() => handleDelete(index)}
                 >

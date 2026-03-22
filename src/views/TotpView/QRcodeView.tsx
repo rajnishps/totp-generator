@@ -46,7 +46,7 @@ const QRcodeView = ({
       <Button
         variant="ghost"
         size="icon"
-        className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-white shadow-md border border-slate-200 hover:bg-slate-50 text-black"
+        className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-white shadow-md border border-zinc-200 hover:bg-zinc-50 text-black"
         onClick={handleExport}
       >
         <Share className="h-4 w-4" />
