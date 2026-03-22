@@ -6,21 +6,18 @@ import { Progress } from "@/components/ui/progress"
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
+import { Pause, Play } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { TOTP } from "totp-generator"
-import { SecretManager } from "./SecretManager"
-import { useToast } from "@/hooks/use-toast"
 import QRcodeView from "./QRcodeView"
-import { Separator } from "@/components/ui/separator"
-import { ClipboardCopy, Pause, Play } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { SecretManager } from "./SecretManager"
 
 type AlgoType = "SHA-1" | "SHA-256" | "SHA-512"
 
@@ -162,7 +159,7 @@ export default function TotpView() {
   }, [currentOtp, isPaused])
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-50 font-sans">
+    <div className="h-screen bg-[#020617] text-slate-50 font-sans">
       <div className="container mx-auto p-4 md:p-8 min-h-screen flex flex-col">
         <header className="flex justify-between items-center mb-2 shrink-0 gap-4">
           <div className="min-w-0">
@@ -184,15 +181,8 @@ export default function TotpView() {
             ) : (
               <Pause className="h-3 w-3 md:h-4 md:w-4 mr-2" />
             )}
-            <span className="hidden xs:inline">
+            <span className=" xs:inline">
               {isPaused ? "Resume" : "Pause"} Auto-copy
-            </span>
-            <span className="xs:hidden">
-              {isPaused ? (
-                <Play className="h-3 w-3" />
-              ) : (
-                <Pause className="h-3 w-3" />
-              )}
             </span>
           </Button>
         </header>
@@ -327,7 +317,7 @@ export default function TotpView() {
 
           {/* Sidebar Area */}
           <aside className="lg:col-span-5 xl:col-span-4 flex flex-col gap-6">
-            <Card className="border-slate-800 bg-slate-900/60 backdrop-blur-md flex flex-col min-h-0 shadow-xl border-opacity-50 lg:h-[calc(100vh-10rem)]">
+            <Card className="border-slate-800 bg-slate-900/60 backdrop-blur-md flex flex-col min-h-0 shadow-xl border-opacity-50 lg:h-[calc(100vh-11rem)]">
               <CardHeader className="border-b border-slate-800/30 pb-4 shrink-0">
                 <CardTitle className="text-sm text-slate-500 font-bold flex items-center gap-2 tracking-widest uppercase">
                   <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
