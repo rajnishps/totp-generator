@@ -34,16 +34,16 @@ export default function TotpView() {
   const router = useRouter()
 
   const [rawSecret, setRawSecret] = useState(
-    searchParams.get("secret") || DEFAULT_SECRET
+    searchParams.get("secret") || DEFAULT_SECRET,
   )
   const [digits, setDigits] = useState(
-    Number(searchParams.get("digits")) || DEFAULT_DIGITS
+    Number(searchParams.get("digits")) || DEFAULT_DIGITS,
   )
   const [timePeriod, setTimePeriod] = useState(
-    Number(searchParams.get("timePeriod")) || DEFAULT_TIME_PERIOD
+    Number(searchParams.get("timePeriod")) || DEFAULT_TIME_PERIOD,
   )
   const [algorithm, setAlgorithm] = useState<AlgoType>(
-    (searchParams.get("algorithm") as AlgoType) || DEFAULT_ALGORITHM
+    (searchParams.get("algorithm") as AlgoType) || DEFAULT_ALGORITHM,
   )
   const [name, setName] = useState(searchParams.get("name") || "")
 
@@ -89,7 +89,7 @@ export default function TotpView() {
   useEffect(() => {
     const updateParams = () => {
       router.push(
-        `?secret=${rawSecret}&name=${name}&digits=${digits}&timePeriod=${timePeriod}&algorithm=${algorithm}`
+        `?secret=${rawSecret}&name=${name}&digits=${digits}&timePeriod=${timePeriod}&algorithm=${algorithm}`,
       )
     }
 
@@ -171,10 +171,16 @@ export default function TotpView() {
             onClick={() => setIsPaused(!isPaused)}
             title={isPaused ? "Resume Auto-copy" : "Pause Auto-copy"}
           >
-            {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+            {isPaused ? (
+              <Play className="h-4 w-4" />
+            ) : (
+              <Pause className="h-4 w-4" />
+            )}
           </Button>
           <CardTitle className="text-center flex flex-col gap-1">
-            {name && <span className="text-sm text-slate-400 font-normal">{name}</span>}
+            {name && (
+              <span className="text-sm text-slate-400 font-normal">{name}</span>
+            )}
             <span className="text-lg">{rawSecret}</span>
           </CardTitle>
           <QRcodeView secret={rawSecret} />
@@ -239,7 +245,17 @@ export default function TotpView() {
             </div>
           </div>
           <Separator className="my-4 " />
-          <Progress value={100 - progress} className="w-full my-4" />
+          <Progress
+            indicatorClassName={
+              progress < 50
+                ? "bg-green-500"
+                : progress < 85
+                  ? "bg-yellow-500"
+                  : "bg-red-500"
+            }
+            value={100 - progress}
+            className="w-full my-4"
+          />
           {/* <Button onClick={handleGenerateOtp}>Generate OTP</Button> */}
 
           {currentOtp && (
