@@ -50,6 +50,7 @@ export default function TotpView() {
   const [nextOtp, setNextOtp] = useState("")
   const [progress, setProgress] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  const [secretsReady, setSecretsReady] = useState(false)
 
   useEffect(() => {
     const secret = searchParams.get("secret") || DEFAULT_SECRET
@@ -132,15 +133,14 @@ export default function TotpView() {
   }, [progress, rawSecret, digits, algorithm, timePeriod])
 
   useEffect(() => {
-    if (navigator && currentOtp && !isPaused) {
+    if (navigator && currentOtp && !isPaused && secretsReady) {
       navigator.clipboard.writeText(currentOtp)
       toast({
         title: `OTP Copied ${currentOtp}`,
         description: "Current OTP has been copied to clipboard",
       })
     }
-  }, [currentOtp, isPaused])
-
+  }, [currentOtp, isPaused, secretsReady])
 
   return (
     <div className="h-screen bg-black text-white md:overflow-clip font-sans">
@@ -305,13 +305,13 @@ export default function TotpView() {
           {/* Sidebar Area */}
           <aside className="lg:col-span-5 xl:col-span-4 flex flex-col gap-6">
             <Card className="border-zinc-800 bg-zinc-900/60 backdrop-blur-md flex flex-col min-h-0 shadow-xl border-opacity-50 lg:h-[calc(100vh-11rem)]">
-              <CardHeader className="border-b border-zinc-800/30 pb-4 shrink-0">
-                <CardTitle className="text-sm text-zinc-500 font-bold flex items-center gap-2 tracking-widest uppercase">
-                  <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
-                  Vault Identity
-                </CardTitle>
-              </CardHeader>
               <CardContent className="pt-6 space-y-8 overflow-y-auto custom-scrollbar flex-1">
+                <div className="space-y-4 pt-4 border-t border-zinc-800/30">
+                  <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">
+                    Stored Access Keys
+                  </h3>
+                  <SecretManager onReady={() => setSecretsReady(true)} />
+                </div>
                 <div className="space-y-6">
                   <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">
                     Global Configuration
@@ -381,13 +381,6 @@ export default function TotpView() {
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div className="space-y-4 pt-4 border-t border-zinc-800/30">
-                  <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">
-                    Stored Access Keys
-                  </h3>
-                  <SecretManager />
                 </div>
               </CardContent>
             </Card>

@@ -14,7 +14,11 @@ type SecretEntry = {
   secret: string
 }
 
-export const SecretManager = () => {
+interface SecretManagerProps {
+  onReady?: () => void
+}
+
+export const SecretManager = ({ onReady }: SecretManagerProps) => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const digitsFromParams = searchParams.get("digits")
@@ -28,7 +32,9 @@ export const SecretManager = () => {
 
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [editingName, setEditingName] = useState("")
-  const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null)
+  const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(
+    null,
+  )
 
   const fetchSecrets = useCallback(async () => {
     try {
@@ -38,6 +44,7 @@ export const SecretManager = () => {
 
       const data: SecretEntry[] = await res.json()
       setSecrets(data)
+      onReady?.()
 
       // Always auto-select the first secret after fetching
       if (data.length > 0) {
@@ -64,7 +71,10 @@ export const SecretManager = () => {
       const res = await fetch("/api/secrets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName || "Untitled", secret: newSecret }),
+        body: JSON.stringify({
+          name: newName || "Untitled",
+          secret: newSecret,
+        }),
       })
 
       if (res.ok) {
@@ -126,56 +136,7 @@ export const SecretManager = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 p-3 rounded-lg bg-zinc-950/40 border border-zinc-800/50">
-        <div className="space-y-2">
-          <Label
-            htmlFor="name"
-            className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold text-left block"
-          >
-            Label
-          </Label>
-          <Input
-            id="name"
-            type="text"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            placeholder="e.g. GitHub"
-            className="h-9 bg-zinc-900 border-zinc-800 text-xs text-zinc-300 placeholder:text-zinc-600 focus:ring-blue-500/20"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label
-            htmlFor="secret"
-            className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold text-left block"
-          >
-            Secret Key
-          </Label>
-          <Input
-            id="secret"
-            type="text"
-            value={newSecret}
-            onChange={(e) => setNewSecret(e.target.value)}
-            placeholder="Enter base32 secret"
-            className="h-9 bg-zinc-900 border-zinc-800 text-xs text-zinc-300 placeholder:text-zinc-600 focus:ring-blue-500/20"
-          />
-        </div>
-        <Button
-          className="w-full h-9 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-md transition-colors"
-          onClick={handleAddSecret}
-          disabled={!newSecret || saving}
-        >
-          {saving ? (
-            <>
-              <Loader2 className="h-3 w-3 animate-spin mr-2" />
-              Saving…
-            </>
-          ) : (
-            "Add to Vault"
-          )}
-        </Button>
-      </div>
-
-      <div className="space-y-2 max-h-[400px] pr-1 overflow-y-auto custom-scrollbar">
+      <div className="space-y-2">
         {secrets.length === 0 && (
           <div className="text-center py-8 px-4 rounded-lg border border-dashed border-zinc-800">
             <p className="text-xs text-zinc-500">No secrets found in vault</p>
@@ -258,12 +219,16 @@ export const SecretManager = () => {
                       `?secret=${entry.secret}&name=${entry.name}&digits=${
                         digitsFromParams === "null" ? 6 : digitsFromParams
                       }&timePeriod=${
-                        timePeriodFromParams === "null" ? 30 : timePeriodFromParams
+                        timePeriodFromParams === "null"
+                          ? 30
+                          : timePeriodFromParams
                       }`,
                     )
                   }
                 >
-                  {searchParams.get("secret") === entry.secret ? "Active" : "Use"}
+                  {searchParams.get("secret") === entry.secret
+                    ? "Active"
+                    : "Use"}
                 </Button>
                 <Button
                   size="sm"
@@ -282,6 +247,54 @@ export const SecretManager = () => {
             </div>
           </div>
         ))}
+      </div>
+      <div className="flex flex-col gap-3 p-3 rounded-lg bg-zinc-950/40 border border-zinc-800/50">
+        <div className="space-y-2">
+          <Label
+            htmlFor="name"
+            className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold text-left block"
+          >
+            Label
+          </Label>
+          <Input
+            id="name"
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="e.g. GitHub"
+            className="h-9 bg-zinc-900 border-zinc-800 text-xs text-zinc-300 placeholder:text-zinc-600 focus:ring-blue-500/20"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label
+            htmlFor="secret"
+            className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold text-left block"
+          >
+            Secret Key
+          </Label>
+          <Input
+            id="secret"
+            type="text"
+            value={newSecret}
+            onChange={(e) => setNewSecret(e.target.value)}
+            placeholder="Enter base32 secret"
+            className="h-9 bg-zinc-900 border-zinc-800 text-xs text-zinc-300 placeholder:text-zinc-600 focus:ring-blue-500/20"
+          />
+        </div>
+        <Button
+          className="w-full h-9 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-md transition-colors"
+          onClick={handleAddSecret}
+          disabled={!newSecret || saving}
+        >
+          {saving ? (
+            <>
+              <Loader2 className="h-3 w-3 animate-spin mr-2" />
+              Saving…
+            </>
+          ) : (
+            "Add to Vault"
+          )}
+        </Button>
       </div>
     </div>
   )
