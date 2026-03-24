@@ -76,8 +76,8 @@ export const SecretManager = ({ masterPassword }: SecretManagerProps) => {
 
       setSecrets(decrypted)
 
-      // Auto-select first secret if none selected
-      if (decrypted.length > 0 && !searchParams.get("secret")) {
+      // Always auto-select the first secret after decrypting
+      if (decrypted.length > 0) {
         const first = decrypted[0]
         router.push(
           `?secret=${first.secret}&name=${first.name}&digits=${
