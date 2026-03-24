@@ -16,6 +16,7 @@ import { Pause, Play } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { TOTP } from "totp-generator"
+import UserMenu from "@/components/auth/UserMenu"
 import QRcodeView from "./QRcodeView"
 import { SecretManager } from "./SecretManager"
 
@@ -170,21 +171,24 @@ export default function TotpView() {
               Secure Offline Vault
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800 transition-all duration-300 shrink-0 text-xs h-8 md:h-10"
-            onClick={() => setIsPaused(!isPaused)}
-          >
-            {isPaused ? (
-              <Play className="h-3 w-3 md:h-4 md:w-4 mr-2" />
-            ) : (
-              <Pause className="h-3 w-3 md:h-4 md:w-4 mr-2" />
-            )}
-            <span className=" xs:inline">
-              {isPaused ? "Resume" : "Pause"} Auto-copy
-            </span>
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800 transition-all duration-300 text-xs h-8 md:h-10"
+              onClick={() => setIsPaused(!isPaused)}
+            >
+              {isPaused ? (
+                <Play className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+              ) : (
+                <Pause className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+              )}
+              <span className="xs:inline">
+                {isPaused ? "Resume" : "Pause"} Auto-copy
+              </span>
+            </Button>
+            <UserMenu />
+          </div>
         </header>
 
         <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-2">
