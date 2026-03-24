@@ -17,6 +17,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { TOTP } from "totp-generator"
 import UserMenu from "@/components/auth/UserMenu"
+import MasterPasswordDialog from "@/components/auth/MasterPasswordDialog"
 import QRcodeView from "./QRcodeView"
 import { SecretManager } from "./SecretManager"
 
@@ -50,34 +51,17 @@ export default function TotpView() {
   const [nextOtp, setNextOtp] = useState("")
   const [progress, setProgress] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  const [masterPassword, setMasterPassword] = useState<string | null>(null)
 
   useEffect(() => {
-    const storedSecrets = localStorage.getItem("secrets")
-    let firstSecret = ""
-    let firstName = ""
-    if (storedSecrets) {
-      const parsed = JSON.parse(storedSecrets)
-      const firstEntry = parsed[0]
-      if (firstEntry) {
-        if (typeof firstEntry === "string") {
-          firstSecret = firstEntry
-        } else {
-          firstSecret = firstEntry.secret
-          firstName = firstEntry.name
-        }
-      } else {
-        firstSecret = DEFAULT_SECRET
-      }
-    }
-    const secret = searchParams.get("secret") || firstSecret
-    const nameParam = searchParams.get("name") || firstName
+    const secret = searchParams.get("secret") || DEFAULT_SECRET
+    const nameParam = searchParams.get("name") || ""
     const digitsParam = Number(searchParams.get("digits")) || DEFAULT_DIGITS
     const timePeriodParam =
       Number(searchParams.get("timePeriod")) || DEFAULT_TIME_PERIOD
     const algorithmParam =
       (searchParams.get("algorithm") as AlgoType) || DEFAULT_ALGORITHM
 
-    // Update state if params change
     setRawSecret(secret)
     setName(nameParam)
     setDigits(digitsParam)
@@ -158,6 +142,10 @@ export default function TotpView() {
       })
     }
   }, [currentOtp, isPaused])
+
+  if (masterPassword === null) {
+    return <MasterPasswordDialog onSubmit={setMasterPassword} onSkip={() => setMasterPassword("")} />
+  }
 
   return (
     <div className="h-screen bg-black text-white md:overflow-clip font-sans">
@@ -404,7 +392,7 @@ export default function TotpView() {
                   <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">
                     Stored Access Keys
                   </h3>
-                  <SecretManager />
+                  <SecretManager masterPassword={masterPassword} />
                 </div>
               </CardContent>
             </Card>
