@@ -7,33 +7,20 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useState, useCallback } from "react"
 import { Edit2, Check, X, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { encryptSecret, decryptSecret } from "@/lib/crypto"
 
-type DecryptedEntry = {
+type SecretEntry = {
   id: string
   name: string
-  secret: string // decrypted plaintext
+  secret: string
 }
 
-type EncryptedEntry = {
-  id: string
-  name: string
-  encryptedSecret: string
-  iv: string
-  salt: string
-}
-
-interface SecretManagerProps {
-  masterPassword: string
-}
-
-export const SecretManager = ({ masterPassword }: SecretManagerProps) => {
+export const SecretManager = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const digitsFromParams = searchParams.get("digits")
   const timePeriodFromParams = searchParams.get("timePeriod")
 
-  const [secrets, setSecrets] = useState<DecryptedEntry[]>([])
+  const [secrets, setSecrets] = useState<SecretEntry[]>([])
   const [newSecret, setNewSecret] = useState("")
   const [newName, setNewName] = useState("")
   const [loading, setLoading] = useState(true)
@@ -41,44 +28,20 @@ export const SecretManager = ({ masterPassword }: SecretManagerProps) => {
 
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [editingName, setEditingName] = useState("")
-  const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(
-    null,
-  )
+  const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null)
 
-  // Fetch & decrypt secrets from the API
   const fetchSecrets = useCallback(async () => {
     try {
       setLoading(true)
       const res = await fetch("/api/secrets")
       if (!res.ok) return
 
-      const encrypted: EncryptedEntry[] = await res.json()
+      const data: SecretEntry[] = await res.json()
+      setSecrets(data)
 
-      const decrypted = await Promise.all(
-        encrypted.map(async (entry) => {
-          try {
-            // No password = stored as plaintext (iv/salt will be empty)
-            const plaintext =
-              masterPassword === ""
-                ? entry.encryptedSecret
-                : await decryptSecret(
-                    entry.encryptedSecret,
-                    entry.iv,
-                    entry.salt,
-                    masterPassword,
-                  )
-            return { id: entry.id, name: entry.name, secret: plaintext }
-          } catch {
-            return { id: entry.id, name: entry.name, secret: "⚠️ DECRYPT ERROR" }
-          }
-        }),
-      )
-
-      setSecrets(decrypted)
-
-      // Always auto-select the first secret after decrypting
-      if (decrypted.length > 0) {
-        const first = decrypted[0]
+      // Always auto-select the first secret after fetching
+      if (data.length > 0) {
+        const first = data[0]
         router.push(
           `?secret=${first.secret}&name=${first.name}&digits=${
             digitsFromParams || 6
@@ -88,7 +51,7 @@ export const SecretManager = ({ masterPassword }: SecretManagerProps) => {
     } finally {
       setLoading(false)
     }
-  }, [masterPassword, searchParams, router, digitsFromParams, timePeriodFromParams])
+  }, [router, digitsFromParams, timePeriodFromParams])
 
   useEffect(() => {
     fetchSecrets()
@@ -98,36 +61,19 @@ export const SecretManager = ({ masterPassword }: SecretManagerProps) => {
     if (!newSecret || saving) return
     setSaving(true)
     try {
-      // No password = store as plaintext with empty iv/salt
-      const payload =
-        masterPassword === ""
-          ? { encryptedSecret: newSecret, iv: "", salt: "" }
-          : await encryptSecret(newSecret, masterPassword).then(
-              ({ ciphertext, iv, salt }) => ({ encryptedSecret: ciphertext, iv, salt }),
-            )
-
       const res = await fetch("/api/secrets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newName || "Untitled",
-          ...payload,
-        }),
+        body: JSON.stringify({ name: newName || "Untitled", secret: newSecret }),
       })
 
       if (res.ok) {
-        const created = await res.json()
-        setSecrets((prev) => [
-          ...prev,
-          { id: created.id, name: created.name, secret: newSecret },
-        ])
-
+        const created: SecretEntry = await res.json()
+        setSecrets((prev) => [...prev, created])
         router.push(
-          `?secret=${newSecret}&name=${newName || "Untitled"}&digits=${
+          `?secret=${created.secret}&name=${created.name}&digits=${
             digitsFromParams === "null" ? 6 : digitsFromParams
-          }&timePeriod=${
-            timePeriodFromParams === "null" ? 30 : timePeriodFromParams
-          }`,
+          }&timePeriod=${timePeriodFromParams === "null" ? 30 : timePeriodFromParams}`,
         )
         setNewSecret("")
         setNewName("")
@@ -173,7 +119,7 @@ export const SecretManager = ({ masterPassword }: SecretManagerProps) => {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="h-5 w-5 animate-spin text-zinc-500" />
-        <span className="ml-2 text-xs text-zinc-500">Decrypting vault…</span>
+        <span className="ml-2 text-xs text-zinc-500">Loading vault…</span>
       </div>
     )
   }
@@ -221,7 +167,7 @@ export const SecretManager = ({ masterPassword }: SecretManagerProps) => {
           {saving ? (
             <>
               <Loader2 className="h-3 w-3 animate-spin mr-2" />
-              Encrypting…
+              Saving…
             </>
           ) : (
             "Add to Vault"
@@ -293,9 +239,7 @@ export const SecretManager = ({ masterPassword }: SecretManagerProps) => {
                       </Button>
                     </div>
                     <span className="text-[10px] font-mono text-zinc-500 truncate block mt-1 text-left">
-                      {entry.secret.startsWith("⚠️")
-                        ? entry.secret
-                        : entry.secret}
+                      {entry.secret}
                     </span>
                   </div>
                 )}
@@ -314,16 +258,12 @@ export const SecretManager = ({ masterPassword }: SecretManagerProps) => {
                       `?secret=${entry.secret}&name=${entry.name}&digits=${
                         digitsFromParams === "null" ? 6 : digitsFromParams
                       }&timePeriod=${
-                        timePeriodFromParams === "null"
-                          ? 30
-                          : timePeriodFromParams
+                        timePeriodFromParams === "null" ? 30 : timePeriodFromParams
                       }`,
                     )
                   }
                 >
-                  {searchParams.get("secret") === entry.secret
-                    ? "Active"
-                    : "Use"}
+                  {searchParams.get("secret") === entry.secret ? "Active" : "Use"}
                 </Button>
                 <Button
                   size="sm"

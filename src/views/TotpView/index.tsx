@@ -17,7 +17,6 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { TOTP } from "totp-generator"
 import UserMenu from "@/components/auth/UserMenu"
-import MasterPasswordDialog from "@/components/auth/MasterPasswordDialog"
 import QRcodeView from "./QRcodeView"
 import { SecretManager } from "./SecretManager"
 
@@ -51,7 +50,6 @@ export default function TotpView() {
   const [nextOtp, setNextOtp] = useState("")
   const [progress, setProgress] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
-  const [masterPassword, setMasterPassword] = useState<string | null>(null)
 
   useEffect(() => {
     const secret = searchParams.get("secret") || DEFAULT_SECRET
@@ -143,9 +141,6 @@ export default function TotpView() {
     }
   }, [currentOtp, isPaused])
 
-  if (masterPassword === null) {
-    return <MasterPasswordDialog onSubmit={setMasterPassword} onSkip={() => setMasterPassword("")} />
-  }
 
   return (
     <div className="h-screen bg-black text-white md:overflow-clip font-sans">
@@ -392,7 +387,7 @@ export default function TotpView() {
                   <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">
                     Stored Access Keys
                   </h3>
-                  <SecretManager masterPassword={masterPassword} />
+                  <SecretManager />
                 </div>
               </CardContent>
             </Card>

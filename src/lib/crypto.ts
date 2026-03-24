@@ -1,94 +1,58 @@
 /**
- * Zero-knowledge client-side encryption for TOTP secrets.
- * Uses Web Crypto API: PBKDF2 key derivation + AES-GCM encryption.
- * All operations run in the browser — the server never sees plaintext.
+ * Server-side encryption for TOTP secrets.
+ * Key = HMAC-SHA256(HASH_SECRET, userId) → AES-256-GCM.
+ * Runs only in API routes (Node.js runtime). Never imported by client code.
  */
 
-const PBKDF2_ITERATIONS = 600_000
-const KEY_LENGTH = 256
-const IV_LENGTH = 12 // 96 bits for AES-GCM
+import { createHmac, createCipheriv, createDecipheriv, randomBytes } from "crypto"
 
-function toBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer)
-  let binary = ""
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i])
-  }
-  return btoa(binary)
+const IV_LENGTH = 12 // 96-bit IV for AES-GCM
+const AUTH_TAG_LENGTH = 16 // 128-bit GCM auth tag
+
+function deriveUserKey(userId: string): Buffer {
+  const secret = process.env.HASH_SECRET
+  if (!secret) throw new Error("HASH_SECRET env variable is not set")
+  return createHmac("sha256", secret).update(userId).digest()
 }
 
-function fromBase64(base64: string): ArrayBuffer {
-  const binary = atob(base64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i)
-  }
-  return bytes.buffer
-}
-
-async function deriveKey(
-  password: string,
-  salt: ArrayBuffer,
-): Promise<CryptoKey> {
-  const encoder = new TextEncoder()
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    "PBKDF2",
-    false,
-    ["deriveKey"],
-  )
-
-  return crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt,
-      iterations: PBKDF2_ITERATIONS,
-      hash: "SHA-256",
-    },
-    keyMaterial,
-    { name: "AES-GCM", length: KEY_LENGTH },
-    false,
-    ["encrypt", "decrypt"],
-  )
-}
-
-export async function encryptSecret(
+export function encryptSecret(
   plaintext: string,
-  password: string,
-): Promise<{ ciphertext: string; iv: string; salt: string }> {
-  const encoder = new TextEncoder()
-  const salt = crypto.getRandomValues(new Uint8Array(16))
-  const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH))
-  const key = await deriveKey(password, salt.buffer)
+  userId: string,
+): { ciphertext: string; iv: string } {
+  const key = deriveUserKey(userId)
+  const iv = randomBytes(IV_LENGTH)
+  const cipher = createCipheriv("aes-256-gcm", key, iv)
 
-  const encrypted = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    encoder.encode(plaintext),
-  )
+  const encrypted = Buffer.concat([
+    cipher.update(plaintext, "utf8"),
+    cipher.final(),
+  ])
+  const authTag = cipher.getAuthTag()
+
+  // Append auth tag to ciphertext for integrity verification on decrypt
+  const combined = Buffer.concat([encrypted, authTag])
 
   return {
-    ciphertext: toBase64(encrypted),
-    iv: toBase64(iv.buffer),
-    salt: toBase64(salt.buffer),
+    ciphertext: combined.toString("base64"),
+    iv: iv.toString("base64"),
   }
 }
 
-export async function decryptSecret(
+export function decryptSecret(
   ciphertext: string,
   iv: string,
-  salt: string,
-  password: string,
-): Promise<string> {
-  const key = await deriveKey(password, fromBase64(salt))
-  const decoder = new TextDecoder()
+  userId: string,
+): string {
+  const key = deriveUserKey(userId)
+  const combined = Buffer.from(ciphertext, "base64")
+  const ivBuf = Buffer.from(iv, "base64")
 
-  const decrypted = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: fromBase64(iv) },
-    key,
-    fromBase64(ciphertext),
-  )
+  // Split auth tag from the end of combined buffer
+  const encrypted = combined.subarray(0, combined.length - AUTH_TAG_LENGTH)
+  const authTag = combined.subarray(combined.length - AUTH_TAG_LENGTH)
 
-  return decoder.decode(decrypted)
+  const decipher = createDecipheriv("aes-256-gcm", key, ivBuf)
+  decipher.setAuthTag(authTag)
+
+  return decipher.update(encrypted) + decipher.final("utf8")
 }

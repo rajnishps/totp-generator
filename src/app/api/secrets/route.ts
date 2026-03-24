@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { encryptSecret, decryptSecret } from "@/lib/crypto"
 import { NextResponse } from "next/server"
 
 export async function GET() {
@@ -8,19 +9,22 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const secrets = await prisma.secret.findMany({
+  const rows = await prisma.secret.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "asc" },
-    select: {
-      id: true,
-      name: true,
-      encryptedSecret: true,
-      iv: true,
-      salt: true,
-    },
+    select: { id: true, name: true, encryptedSecret: true, iv: true },
   })
 
-  return NextResponse.json(secrets)
+  const decrypted = rows.map((row) => {
+    try {
+      const secret = decryptSecret(row.encryptedSecret, row.iv, session.user!.id!)
+      return { id: row.id, name: row.name, secret }
+    } catch {
+      return { id: row.id, name: row.name, secret: "⚠️ DECRYPT ERROR" }
+    }
+  })
+
+  return NextResponse.json(decrypted)
 }
 
 export async function POST(request: Request) {
@@ -30,31 +34,24 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json()
-  const { name, encryptedSecret, iv, salt } = body
+  const { name, secret } = body
 
-  if (!encryptedSecret || !iv || !salt) {
-    return NextResponse.json(
-      { error: "Missing encrypted data" },
-      { status: 400 },
-    )
+  if (!secret) {
+    return NextResponse.json({ error: "Missing secret" }, { status: 400 })
   }
 
-  const secret = await prisma.secret.create({
+  const { ciphertext, iv } = encryptSecret(secret, session.user.id)
+
+  const row = await prisma.secret.create({
     data: {
       userId: session.user.id,
       name: name || "Untitled",
-      encryptedSecret,
+      encryptedSecret: ciphertext,
       iv,
-      salt,
+      salt: "", // unused — key is derived from HASH_SECRET + userId
     },
-    select: {
-      id: true,
-      name: true,
-      encryptedSecret: true,
-      iv: true,
-      salt: true,
-    },
+    select: { id: true, name: true },
   })
 
-  return NextResponse.json(secret, { status: 201 })
+  return NextResponse.json({ id: row.id, name: row.name, secret }, { status: 201 })
 }
